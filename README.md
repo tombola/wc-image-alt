@@ -3,6 +3,9 @@
 [![PyPI - Version](https://img.shields.io/pypi/v/wc-image-alt.svg)](https://pypi.org/project/wc-image-alt)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/wc-image-alt.svg)](https://pypi.org/project/wc-image-alt)
 
+Bulk populate the alt text for product images using the WooCommerce product
+title, where specific alt text has not been defined.
+
 -----
 
 **Table of Contents**

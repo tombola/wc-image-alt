@@ -240,9 +240,10 @@ def export_csv(ctx, rows, *args, **kwargs):
 
 
 @cli.command()
+@click.option("--replace-title", is_flag=True)
 @click.option("-n", "--rows", type=click.INT, default=0)
 @click.pass_context
-def import_csv(ctx, rows, *args, **kwargs):
+def import_csv(ctx, rows, replace_title, *args, **kwargs):
     force = ctx.parent.obj["force"]
     write = ctx.parent.obj["write"]
     verbose = ctx.parent.obj["verbose"]
@@ -277,7 +278,13 @@ def import_csv(ctx, rows, *args, **kwargs):
             image__id = row["Image ID"]
             image__alt_text = row["Alt"] or row["Suggested"]
 
-            all_products_images[product__id].append({"id": image__id, "alt": image__alt_text})
+            if replace_title:
+                # Also use the alt value to populate (replace) the image title
+                all_products_images[product__id].append(
+                    {"id": image__id, "alt": image__alt_text, "name": image__alt_text}
+                )
+            else:
+                all_products_images[product__id].append({"id": image__id, "alt": image__alt_text})
             line_count = i
 
         if verbose:
