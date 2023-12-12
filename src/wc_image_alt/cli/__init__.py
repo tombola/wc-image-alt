@@ -176,6 +176,10 @@ def cli(ctx, write, force, verbose):
 @click.option("-n", "--rows", type=click.INT, default=0)
 @click.pass_context
 def export_csv(ctx, rows, *args, **kwargs):
+    """
+    Export a CSV from WooCommerce site with all product images and their alt
+    text
+    """
     force = ctx.parent.obj["force"]
     write = ctx.parent.obj["write"]
     console.log(f"{force=} {write=}")
@@ -244,6 +248,9 @@ def export_csv(ctx, rows, *args, **kwargs):
 @click.option("-n", "--rows", type=click.INT, default=0)
 @click.pass_context
 def import_csv(ctx, rows, replace_title, *args, **kwargs):
+    """
+    Import the exported CSV to apply alt text once it has been reviewed and modified.
+    """
     force = ctx.parent.obj["force"]
     write = ctx.parent.obj["write"]
     verbose = ctx.parent.obj["verbose"]
