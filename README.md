@@ -7,14 +7,40 @@
 
 **Table of Contents**
 
-- [Installation](#installation)
-- [License](#license)
+- [wc-image-alt](#wc-image-alt)
+  - [Installation](#installation)
+  - [Usage](#usage)
+    - [Export a CSV of product images](#export-a-csv-of-product-images)
+    - [Import alt text into WooCommerce](#import-alt-text-into-woocommerce)
+  - [License](#license)
 
 ## Installation
 
 ```console
 pip install wc-image-alt
 ```
+
+## Usage
+
+First copy `.env.example` to `env` and fill in your woocommerce REST API
+credentials.
+
+Either load this using dotenv, or source the file (`source .env`).
+
+### Export a CSV of product images
+
+`wc-image-alt export-csv`
+
+### Import alt text into WooCommerce
+
+Dry run:
+
+`wc-image-alt import-csv`
+
+Update the product image alt text from the (exported/modified) CSV:
+
+`wc-image-alt -w import-csv`
+
 
 ## License
 

@@ -175,7 +175,7 @@ def cli(ctx, write, force, verbose):
 @cli.command()
 @click.option("-n", "--rows", type=click.INT, default=0)
 @click.pass_context
-def export_all(ctx, rows, *args, **kwargs):
+def export_csv(ctx, rows, *args, **kwargs):
     force = ctx.parent.obj["force"]
     write = ctx.parent.obj["write"]
     console.log(f"{force=} {write=}")
