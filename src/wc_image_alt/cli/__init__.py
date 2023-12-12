@@ -267,12 +267,11 @@ def import_csv(ctx, rows, *args, **kwargs):
         all_products_images = defaultdict(lambda: [])
 
         for i, row in enumerate(csv_reader):
-            if i == 0:
+            if i == 0 and verbose:
                 print(f'Column names are {", ".join(row)}')
                 continue
-            if rows and i == rows:
+            if rows and i > rows:
                 # Number of rows limit
-                console.print(f'[bold magenta]Processed {i} rows')
                 break
             product__id = row["Product ID"]
             image__id = row["Image ID"]
@@ -288,4 +287,4 @@ def import_csv(ctx, rows, *args, **kwargs):
         if write:
             for product_id, product_images in all_products_images.items():
                 wc_update_product_images(product_id, product_images)
-        print(f'Processed {line_count} lines.')
+        print(f'Processed {line_count} images.')
