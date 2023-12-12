@@ -4,16 +4,23 @@
 import click
 import os
 import requests
+import csv
+
+from rich import print
+from rich.console import Console
+from rich.table import Table
 
 from wc_image_alt.__about__ import __version__
 from woocommerce import API
-from rich import print
 
 WC_URL = os.environ.get("WC_URL")
 WC_CONSUMER_KEY = os.environ.get("WC_CONSUMER_KEY")
 WC_CONSUMER_SECRET = os.environ.get("WC_CONSUMER_SECRET")
 
 WC_MAX_API_RESULT_COUNT = 100
+CSV_OUTPUT_FILE = "product_images.csv"
+
+console = Console()
 
 
 def get_wcapi() -> API:
@@ -24,7 +31,7 @@ def get_wcapi() -> API:
             WC_CONSUMER_SECRET,
         )
     ):
-        print("Credentials not provided from environment")
+        console.print("Credentials not provided from environment")
         quit()
     return API(
         url=WC_URL,
@@ -35,8 +42,8 @@ def get_wcapi() -> API:
     )
 
 
-def wcapi(func, *args, **kwargs):
-    def wrapper():
+def wcapi(func):
+    def wrapper(*args, **kwargs):
         return func(wcapi=get_wcapi(), *args, **kwargs)
 
     return wrapper
@@ -60,7 +67,7 @@ def aggregate_paginated_response(func):
 
         while page < num_pages:
             page += 1
-            print(f"{page=}")
+            console.print(f"{page=}")
 
             response = func(page=page, *args, **kwargs)
 
@@ -68,7 +75,7 @@ def aggregate_paginated_response(func):
             num_pages = int(response.headers["X-WP-TotalPages"])
             num_products = int(response.headers["X-WP-Total"])
 
-        print(f"{num_products=}, {len(items)=}")
+        console.print(f"{num_products=}, {len(items)=}")
         return items
 
     return wrapper
@@ -82,6 +89,7 @@ def get_all_products(wcapi: API, page=1) -> requests.Response:
 
     Iterates paginated requests to escape API max per page limit.
     """
+    # TODO: yield request and combine to aggregate, rather than decorator
     response = wcapi.get(
         "products",
         params={
@@ -89,28 +97,89 @@ def get_all_products(wcapi: API, page=1) -> requests.Response:
             "page": page,
         },
     )
-    # response = wcapi.get(
-    #     "products",
-    # )
-    print(response.status_code)
+
+    console.print(response.status_code)
     response.raise_for_status()
     return response
 
 
+def get_alt_suggestion(product):
+    return product["name"].split("***")[0].split("(")[0]
+
+
+@wcapi
+def get_products(wcapi: API, num=0) -> dict:
+    """
+    Query WooCommerce rest api for specified number of products
+    """
+    # TODO: Not working!
+    response = wcapi.get(
+        "products",
+        params={
+            "per_page": num,
+        },
+    )
+    console.print(response.status_code)
+    response.raise_for_status()
+    return response.json()
+
+
 @click.group(context_settings={"help_option_names": ["-h", "--help"]}, invoke_without_command=True)
 @click.option("--force", "-f", is_flag=True)
+@click.option("--write", "-w", is_flag=True)
+@click.option("-n", "--rows", type=click.INT, default=0)
 @click.version_option(version=__version__, prog_name="wc-image-alt")
-def wc_image_alt(force):
+def wc_image_alt(rows, write, force):
     if force or click.confirm(f'Querying {WC_URL} - continue?'):
         click.echo("Getting products from WooCommerce")
     else:
         click.echo("Goodbye")
 
-    response: requests.Response = get_all_products()
+    if rows:
+        products = get_products(num=rows)
+    else:
+        products = get_all_products()
 
-    try:
-        products = response.json()
-    except Exception:
-        exit(1)
+    table = Table(title="Product Images")
+    table.add_column("Product name", justify="right", style="cyan", no_wrap=True)
+    table.add_column("Image name", style="magenta")
+    table.add_column("Alt", justify="right", style="green")
+    table.add_column("Suggested", justify="right", style="green")
+    table.add_column("Src", style="cyan")
+    table.add_column("Product", style="blue")
+    table.add_column("Product ID", style="blue")
+    table.add_column("Image ID", style="blue")
 
-    print(f"{len(products)} products returned")
+    with open(CSV_OUTPUT_FILE, mode='w') as product_images_csv:
+        images_csv = csv.writer(product_images_csv, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        images_csv.writerow(
+            (
+                "Product name",
+                "Image name",
+                "Alt",
+                "Suggested",
+                "Src",
+                "Product",
+                "Product ID",
+                "Image ID",
+            )
+        )
+        for product in products:
+            images = product["images"]
+            for image in images:
+                row = (
+                    product["name"],
+                    image["name"],
+                    image["alt"],
+                    get_alt_suggestion(product),
+                    image["src"],
+                    product["permalink"],
+                    str(product["id"]),
+                    str(image["id"]),
+                )
+                table.add_row(*row)
+                images_csv.writerow(row)
+
+    console.print(table)
+    console.print(f"{len(products)} products returned")
+    console.print(f"Exported to {CSV_OUTPUT_FILE}")
