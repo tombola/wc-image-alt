@@ -16,6 +16,8 @@ from woocommerce import API
 WC_URL = os.environ.get("WC_URL")
 WC_CONSUMER_KEY = os.environ.get("WC_CONSUMER_KEY")
 WC_CONSUMER_SECRET = os.environ.get("WC_CONSUMER_SECRET")
+WC_PRODUCTION_ENVIRONMENT = os.environ.get("WC_PRODUCTION_ENVIRONMENT")
+
 
 WC_MAX_API_RESULT_COUNT = 100
 CSV_OUTPUT_FILE = "product_images.csv"
@@ -33,6 +35,7 @@ def get_wcapi() -> API:
     ):
         console.print("Credentials not provided from environment")
         quit()
+    console.print(f"Connecting to {WC_URL}")
     return API(
         url=WC_URL,
         consumer_key=WC_CONSUMER_KEY,
@@ -104,7 +107,13 @@ def get_all_products(wcapi: API, page=1) -> requests.Response:
 
 
 def get_alt_suggestion(product):
-    return product["name"].split("***")[0].split("(")[0]
+    alt = product["name"].split("***")[0].split("(")[0]
+    # change word order from hyphen
+    hyphenated = alt.split(" - ")
+    if len(hyphenated) == 2:
+        alt = f"{hyphenated[1]}{hyphenated[0]}"
+    # strip quotes to avoid issues?
+    return alt
 
 
 @wcapi
@@ -130,6 +139,9 @@ def get_products(wcapi: API, num=0) -> dict:
 @click.option("-n", "--rows", type=click.INT, default=0)
 @click.version_option(version=__version__, prog_name="wc-image-alt")
 def wc_image_alt(rows, write, force):
+    if WC_PRODUCTION_ENVIRONMENT:
+        force = False
+
     if force or click.confirm(f'Querying {WC_URL} - continue?'):
         click.echo("Getting products from WooCommerce")
     else:
