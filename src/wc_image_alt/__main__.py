@@ -4,6 +4,6 @@
 import sys
 
 if __name__ == "__main__":
-    from wc_image_alt.cli import wc_image_alt
+    from wc_image_alt.cli import cli
 
-    sys.exit(wc_image_alt())
+    sys.exit(cli())

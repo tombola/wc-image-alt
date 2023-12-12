@@ -36,7 +36,7 @@ Issues = "https://github.com/unknown/wc-image-alt/issues"
 Source = "https://github.com/unknown/wc-image-alt"
 
 [project.scripts]
-wc-image-alt = "wc_image_alt.cli:wc_image_alt"
+wc-image-alt = "wc_image_alt.cli:cli"
 
 [tool.hatch.version]
 path = "src/wc_image_alt/__about__.py"

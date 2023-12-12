@@ -1,12 +1,12 @@
-# SPDX-FileCopyrightText: 2023-present tombola <tombola@github>
 #
+# SPDX-FileCopyrightText: 2023-present tombola <tombola@github>
 # SPDX-License-Identifier: MIT
 import click
 import os
 import requests
 import csv
+from functools import wraps
 
-from rich import print
 from rich.console import Console
 from rich.table import Table
 
@@ -35,7 +35,7 @@ def get_wcapi() -> API:
     ):
         console.print("Credentials not provided from environment")
         quit()
-    console.print(f"Connecting to {WC_URL}")
+    console.print("Connecting to {WC_URL}")
     return API(
         url=WC_URL,
         consumer_key=WC_CONSUMER_KEY,
@@ -133,12 +133,25 @@ def get_products(wcapi: API, num=0) -> dict:
     return response.json()
 
 
-@click.group(context_settings={"help_option_names": ["-h", "--help"]}, invoke_without_command=True)
+@click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.option("--force", "-f", is_flag=True)
 @click.option("--write", "-w", is_flag=True)
-@click.option("-n", "--rows", type=click.INT, default=0)
 @click.version_option(version=__version__, prog_name="wc-image-alt")
-def wc_image_alt(rows, write, force):
+@click.pass_context
+def cli(ctx, write, force):
+    ctx.ensure_object(dict)
+    ctx.obj["write"] = write
+    ctx.obj["force"] = force
+
+
+@cli.command()
+@click.option("-n", "--rows", type=click.INT, default=0)
+@click.pass_context
+def export_all(ctx, rows, *args, **kwargs):
+    force = ctx.parent.obj["force"]
+    write = ctx.parent.obj["write"]
+    console.log(f"{force=} {write=}")
+
     if WC_PRODUCTION_ENVIRONMENT:
         force = False
 
@@ -146,6 +159,7 @@ def wc_image_alt(rows, write, force):
         click.echo("Getting products from WooCommerce")
     else:
         click.echo("Goodbye")
+        exit(1)
 
     if rows:
         products = get_products(num=rows)
