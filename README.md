@@ -6,6 +6,10 @@
 Bulk populate the alt text for product images using the WooCommerce product
 title, where specific alt text has not been defined.
 
+DISCLAIMER: If you would like to use this utility, please do test on a
+local/staging environment first, and check that product images are affected as
+you itend.
+
 -----
 
 **Table of Contents**
